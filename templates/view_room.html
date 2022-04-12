@@ -35,6 +35,7 @@
 //     const socket = io.connect("http://127.0.0.1:5000");
 
     const socket = io.connect("wss://edhiraj-chat-app.herokuapp.com/socket.io/?EIO=3&transport=websocket");
+    socket.AsyncServer(async_mode='aiohttp', cors_allowed_origins='*')
 //     var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + '/socket.io/?EIO=3&transport=websocket')
 
 
