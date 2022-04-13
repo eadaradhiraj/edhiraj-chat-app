@@ -7,7 +7,7 @@ from flask_socketio import SocketIO, join_room, leave_room
 from pymongo.errors import DuplicateKeyError
 
 from db import get_user, save_user, save_room, add_room_members, get_rooms_for_user, get_room, is_room_member, \
-    get_room_members, is_room_admin, update_room, remove_room_members, save_message, get_messages
+    get_room_members, is_room_admin, update_room, remove_room_members, save_message, get_messages, get_likes_for_room
 
 app = Flask(__name__)
 app.secret_key = "sfdjkafnk"
@@ -122,8 +122,14 @@ def view_room(room_id):
     if room and is_room_member(room_id, current_user.username):
         room_members = get_room_members(room_id)
         messages = get_messages(room_id)
+        likes = get_likes_for_room(room_id)
+        # import pdb; pdb.set_trace()
+        cntr = {}
+        for l in likes:
+            cid = l['_id']['message_id']
+            cntr[cid] = cntr.get(cid,0) + 1
         return render_template('view_room.html', username=current_user.username, room=room, room_members=room_members,
-                               messages=messages)
+                               messages=messages, cntr=cntr, objid=str)
     else:
         return "Room not found", 404
 

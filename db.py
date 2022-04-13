@@ -13,6 +13,7 @@ users_collection = chat_db.get_collection("users")
 rooms_collection = chat_db.get_collection("rooms")
 room_members_collection = chat_db.get_collection("room_members")
 messages_collection = chat_db.get_collection("messages")
+likes_collection = chat_db.get_collection("likes")
 
 
 def save_user(username, email, password):
@@ -64,7 +65,9 @@ def get_room_members(room_id):
 
 def get_rooms_for_user(username):
     return list(room_members_collection.find({'_id.username': username}))
-
+        
+def get_likes_for_room(room_id):
+    return list(likes_collection.find({'_id.room_id':room_id}))
 
 def is_room_member(room_id, username):
     return room_members_collection.count_documents({'_id': {'room_id': ObjectId(room_id), 'username': username}})
@@ -83,9 +86,9 @@ MESSAGE_FETCH_LIMIT = 3
 
 
 def get_messages(room_id, page=0):
-    offset = page * MESSAGE_FETCH_LIMIT
+    # offset = page * MESSAGE_FETCH_LIMIT
     messages = list(
-        messages_collection.find({'room_id': room_id}).sort('_id', DESCENDING).limit(MESSAGE_FETCH_LIMIT).skip(offset))
+        messages_collection.find({'room_id': room_id}).sort('_id', DESCENDING))#.limit(MESSAGE_FETCH_LIMIT).skip(offset))
     for message in messages:
         message['created_at'] = message['created_at'].strftime("%d %b, %H:%M")
     return messages[::-1]

@@ -8,10 +8,14 @@
 <h1>Welcome to chat room: {{ room.name }}</h1>
 
 
-<button type="button" id="load_older_messages_btn">Load Older Messages</button>
+<!-- <button type="button" id="load_older_messages_btn">Load Older Messages</button> -->
 <div id="messages">
     {% for message in messages %}
-        <div><b>{{ message.sender }}&nbsp;[{{ message.created_at }}]:&nbsp;</b> {{ message.text }}</div>
+        <div id="{{message['_id']}}"><b>{{ message.sender }}&nbsp;[{{ message.created_at }}]:&nbsp;</b> {{ message.text }}</div>
+        {% set mid = objid(message['_id']) %}
+        {% if mid in cntr %}
+            <p>Likes {{cntr[mid]}}</p>
+        {% endif %}
     {% endfor %}
 </div>
 
@@ -81,7 +85,7 @@
 
     function prepend_message(message, username, created_at) {
         const newNode = document.createElement('div');
-        newNode.innerHTML = `<b>${username}&nbsp;[${created_at}]:&nbsp;</b> ${message}`;
+        newNode.innerHTML = `<b>${username}&nbsp;[${created_at}]:&nbsp;</b> ${message}<button>Like</button>`;
         const messages_div = document.getElementById('messages');
         messages_div.insertBefore(newNode, messages_div.firstChild);
     }
