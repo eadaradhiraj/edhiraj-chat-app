@@ -1,13 +1,33 @@
 from datetime import datetime
-
 from bson.json_util import dumps
 from flask import Flask, render_template, request, redirect, url_for
-from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from flask_login import (
+    LoginManager,
+    login_user,
+    login_required,
+    logout_user,
+    current_user
+)
 from flask_socketio import SocketIO, join_room, leave_room
 from pymongo.errors import DuplicateKeyError
-
-from db import get_user, save_user, save_room, add_room_members, get_rooms_for_user, get_room, is_room_member, \
-    get_room_members, is_room_admin, update_room, remove_room_members, save_message, get_messages, get_likes_for_room
+from db import (
+    get_user,
+    save_like,
+    save_user,
+    save_room,
+    add_room_members,
+    get_rooms_for_user,
+    get_room,
+    is_room_member,
+    get_room_members,
+    is_room_admin,
+    update_room,
+    remove_room_members,
+    save_message,
+    get_messages,
+    get_likes_for_room,
+    remove_like
+)
 
 app = Flask(__name__)
 app.secret_key = "sfdjkafnk"
@@ -15,7 +35,6 @@ socketio = SocketIO(app)
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
-# print('.......................', current_user)
 
 @app.route('/')
 def home():
@@ -123,13 +142,13 @@ def view_room(room_id):
         room_members = get_room_members(room_id)
         messages = get_messages(room_id)
         likes = get_likes_for_room(room_id)
-        # import pdb; pdb.set_trace()
-        cntr = {}
+        cntr, message_likes = {}, {}
         for l in likes:
-            cid = l['_id']['message_id']
+            cid = l['message_id']
             cntr[cid] = cntr.get(cid,0) + 1
+            message_likes.setdefault(cid,[]).append(l['liker'])
         return render_template('view_room.html', username=current_user.username, room=room, room_members=room_members,
-                               messages=messages, cntr=cntr, objid=str)
+                               messages=messages, cntr=cntr, objid=str, message_likes=message_likes)
     else:
         return "Room not found", 404
 
@@ -155,6 +174,21 @@ def handle_send_message_event(data):
     save_message(data['room'], data['message'], data['username'])
     socketio.emit('receive_message', data, room=data['room'])
 
+@socketio.on('send_like')
+def handle_send_like_event(data):
+    app.logger.info("{} has liked message {} in room {}".format(data['liker'],
+                                                                    data['room_id'],
+                                                                    data['message_id']))
+    save_like(data['room_id'], data['liker'], data['message_id'])
+    socketio.emit('receive_like', data, room_id=data['room_id'])
+
+@socketio.on('remove_like')
+def handle_remove_like_event(data):
+    app.logger.info("{} has removed the like on message {} in room {}".format(data['liker'],
+                                                                    data['room_id'],
+                                                                    data['message_id']))
+    remove_like(data['room_id'], data['liker'], data['message_id'])
+    socketio.emit('remove_like', data, room_id=data['room_id'])
 
 @socketio.on('join_room')
 def handle_join_room_event(data):

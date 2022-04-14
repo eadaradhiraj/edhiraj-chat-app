@@ -58,16 +58,25 @@ def remove_room_members(room_id, usernames):
     room_members_collection.delete_many(
         {'_id': {'$in': [{'room_id': ObjectId(room_id), 'username': username} for username in usernames]}})
 
+def remove_like(room_id, liker, message_id):
+    print({'room_id': room_id, 'liker':liker, 'message_id':message_id})
+    likes_collection.delete_many({'room_id': room_id, 'liker':liker, 'message_id':message_id})
 
 def get_room_members(room_id):
     return list(room_members_collection.find({'_id.room_id': ObjectId(room_id)}))
-
 
 def get_rooms_for_user(username):
     return list(room_members_collection.find({'_id.username': username}))
         
 def get_likes_for_room(room_id):
-    return list(likes_collection.find({'_id.room_id':room_id}))
+    return list(likes_collection.find({'room_id':room_id}))
+
+# def get_likes_for_user_message(liker, message_id):
+#     res = list(likes_collection.find({'_id.message_id':message_id, 'liker':liker}))
+#     if res:
+#         return res[0]['_id']
+#     else:
+#         return []
 
 def is_room_member(room_id, username):
     return room_members_collection.count_documents({'_id': {'room_id': ObjectId(room_id), 'username': username}})
@@ -81,12 +90,12 @@ def is_room_admin(room_id, username):
 def save_message(room_id, text, sender):
     messages_collection.insert_one({'room_id': room_id, 'text': text, 'sender': sender, 'created_at': datetime.now()})
 
+def save_like(room_id, liker, message_id):
+    likes_collection.insert_one(
+        {'liker':liker, 'room_id': room_id, 'message_id':message_id}
+    )
 
-MESSAGE_FETCH_LIMIT = 3
-
-
-def get_messages(room_id, page=0):
-    # offset = page * MESSAGE_FETCH_LIMIT
+def get_messages(room_id):
     messages = list(
         messages_collection.find({'room_id': room_id}).sort('_id', DESCENDING))#.limit(MESSAGE_FETCH_LIMIT).skip(offset))
     for message in messages:

@@ -7,8 +7,6 @@
 <body>
 <h1>Welcome to chat room: {{ room.name }}</h1>
 
-
-<!-- <button type="button" id="load_older_messages_btn">Load Older Messages</button> -->
 <div id="messages">
     {% for message in messages %}
         <div id="{{message['_id']}}"><b>{{ message.sender }}&nbsp;[{{ message.created_at }}]:&nbsp;</b> {{ message.text }}</div>
@@ -16,6 +14,12 @@
         {% if mid in cntr %}
             <p>Likes {{cntr[mid]}}</p>
         {% endif %}
+        {% if username not in message_likes.get(mid,[])%}
+        <button type="button" onclick="reg_like(this)" liker="{{ username }}" room_id="{{objid(room['_id'])}}" message_id="{{message['_id']}}" class="like">Like</button>
+        {% else %}
+        <button type="button" onclick="rem_like(this)" liker="{{ username }}" room_id="{{objid(room['_id'])}}" message_id="{{message['_id']}}" class="unlike">Unlike</button>
+        {% endif %}
+        
     {% endfor %}
 </div>
 
@@ -35,13 +39,9 @@
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
 <script>
-//     const socket = io.connect("https://edhirajchat.herokuapp.com");
-//     const socket = io.connect("http://127.0.0.1:5000");
-
-    // const socket = io.connect("wss://edhiraj-chat-app.herokuapp.com/socket.io/?EIO=3&transport=websocket");
     var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
-    // socket.AsyncServer(async_mode='aiohttp', cors_allowed_origins='*')
-//     var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + '/socket.io/?EIO=3&transport=websocket')
+
+    let like = document.getElementsByClassName("like");
 
 
     socket.on('connect', function () {
@@ -49,22 +49,7 @@
             username: "{{ username }}",
             room: "{{ room._id }}"
         });
-
         let message_input = document.getElementById('message_input');
-
-        document.getElementById('message_input_form').onsubmit = function (e) {
-            e.preventDefault();
-            let message = message_input.value.trim();
-            if (message.length) {
-                socket.emit('send_message', {
-                    username: "{{ username }}",
-                    room: "{{ room._id }}",
-                    message: message
-                })
-            }
-            message_input.value = '';
-            message_input.focus();
-        }
     });
 
     let page = 0;
@@ -88,6 +73,28 @@
         newNode.innerHTML = `<b>${username}&nbsp;[${created_at}]:&nbsp;</b> ${message}<button>Like</button>`;
         const messages_div = document.getElementById('messages');
         messages_div.insertBefore(newNode, messages_div.firstChild);
+    }
+
+    function reg_like(e) {
+        console.log(e.getAttribute("room_id"))
+        console.log(e.getAttribute("liker"))
+        console.log(e.getAttribute("message_id"))
+        socket.emit('send_like', {
+                    liker: e.getAttribute("liker"),
+                    room_id: e.getAttribute("room_id"),
+                    message_id: e.getAttribute("message_id")
+                })
+    }
+
+    function rem_like(e) {
+        console.log(e.getAttribute("room_id"))
+        console.log(e.getAttribute("liker"))
+        console.log(e.getAttribute("message_id"))
+        socket.emit('remove_like', {
+                    liker: e.getAttribute("liker"),
+                    room_id: e.getAttribute("room_id"),
+                    message_id: e.getAttribute("message_id")
+                })
     }
 
     window.onbeforeunload = function () {
