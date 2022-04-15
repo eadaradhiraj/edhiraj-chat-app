@@ -31,7 +31,7 @@ from db import (
 
 app = Flask(__name__)
 app.secret_key = "sfdjkafnk"
-socketio = SocketIO(app)
+socketio = SocketIO(app,cors_allowed_origins="*")
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
